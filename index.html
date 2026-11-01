@@ -24,7 +24,8 @@
 html,body{height:100%}
 body{background:var(--paper);color:var(--ink);font-family:var(--f-display);overflow:hidden}
 .app{position:relative;height:100%}
-canvas#tree{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:default;touch-action:none}
+canvas#tree{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+canvas#tree.dragging{cursor:grabbing}
 
 header{position:absolute;z-index:5;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-block:26px 0;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));pointer-events:none}
 header>*{pointer-events:auto}
@@ -358,7 +359,7 @@ function buildLeaves(p){
 const cv=$('#tree'), ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
 const cam={x:0,y:0,z:1.6,r:0};
-const input={mx:.18,my:.5,drag:0,wheel:0,touch:false};
+const input={mx:.18,my:.5,drag:0,dragY:0,wheel:0,touch:false};
 let openIdx=-1;
 function baseZoom(){ return Math.max(.42,Math.min(.82,H/1000,W/760)); }
 function target(){
@@ -368,12 +369,12 @@ function target(){
     let x=L/2-20 + (input.touch?0:(input.mx-.5)*range) + input.drag + input.wheel;
     x=Math.max(L/2-20-range/2-40,Math.min(L/2-20+range/2+40,x));
     if(t<1.2 && !reduce) return {x:60,y:0,z:z0*1.5,r:0,k:.9};
-    return {x, y:(input.touch?0:(input.my-.5)*70), z:z0, r:0, k:t<6?.55:1.5};
+    return {x, y:(input.touch?0:(input.my-.5)*70)+input.dragY, z:z0, r:0, k:t<6?.55:1.5};
   }
   const p=proj[openIdx], o=p.open, dx=Math.cos(p.ang), dy=Math.sin(p.ang);
   const along=o.len*.5 + (input.touch?0:(input.mx-.5)*o.len*.45) + input.drag + input.wheel;
   const r=Math.max(-.5,Math.min(.5,-.21-p.ang));
-  return {x:p.node[0]+dx*along, y:p.node[1]+dy*along, z:z0*1.32, r, k:1.1};
+  return {x:p.node[0]+dx*along, y:p.node[1]+dy*along+input.dragY, z:z0*1.32, r, k:1.1};
 }
 function toScreen(x,y){ const c=Math.cos(cam.r), s=Math.sin(cam.r), X=x-cam.x, Y=y-cam.y; return [W/2+(X*c-Y*s)*cam.z, H/2+(X*s+Y*c)*cam.z]; }
 function toWorld(sx,sy){ const X=(sx-W/2)/cam.z, Y=(sy-H/2)/cam.z, c=Math.cos(-cam.r), s=Math.sin(-cam.r); return [cam.x+X*c-Y*s, cam.y+X*s+Y*c]; }
@@ -460,14 +461,14 @@ function setDim(){
 function closeOpen(){
   if(openIdx<0) return;
   const p=proj[openIdx]; p.open.branch.die=now(); removeLabels('leaf'+openIdx); p.open=null;
-  const was=openIdx; openIdx=-1; input.drag=0; input.wheel=0; setDim();
+  const was=openIdx; openIdx=-1; input.drag=0; input.dragY=0; input.wheel=0; setDim();
   return was;
 }
 function openProject(i){
   hideOv();
   if(openIdx===i){ const was=closeOpen(); nodes.find(n=>n.key==='p'+was)?.el.focus({preventScroll:true}); return; }
   closeOpen();
-  openIdx=i; input.drag=0; input.wheel=0;
+  openIdx=i; input.drag=0; input.dragY=0; input.wheel=0;
   buildLeaves(proj[i]); buildLeafLabels(proj[i]); setDim();
 }
 
@@ -502,15 +503,15 @@ $('#ovClose').onclick=hideOv;
 /* ---------------- input ---------------- */
 let lastPointer='mouse', dragStart=null, dragMoved=0;
 addEventListener('pointermove',e=>{
-  if(e.pointerType==='mouse' && !e.target.closest?.('.lbl') && !e.target.closest?.('.ov')){ input.touch=false; input.mx=e.clientX/innerWidth; input.my=e.clientY/innerHeight; }
-  if(dragStart){ const dx=e.clientX-dragStart.x; dragMoved=Math.max(dragMoved,Math.abs(dx)); input.drag=dragStart.d-dx/cam.z; }
+  if(e.pointerType==='mouse' && !dragStart && !e.target.closest?.('.lbl') && !e.target.closest?.('.ov')){ input.touch=false; input.mx=e.clientX/innerWidth; input.my=e.clientY/innerHeight; }
+  if(dragStart){ const dx=e.clientX-dragStart.x, dy=e.clientY-dragStart.y; dragMoved=Math.max(dragMoved,Math.hypot(dx,dy)); input.drag=dragStart.d-dx/cam.z; input.dragY=Math.max(-320,Math.min(320,dragStart.dy-dy/cam.z)); }
 });
-cv.addEventListener('pointerdown',e=>{ lastPointer=e.pointerType; if(e.pointerType!=='mouse'){ input.touch=true; dragStart={x:e.clientX,d:input.drag}; dragMoved=0; } });
+cv.addEventListener('pointerdown',e=>{ lastPointer=e.pointerType; if(e.pointerType==='mouse'&&e.button!==0) return; if(e.pointerType!=='mouse') input.touch=true; dragStart={x:e.clientX,y:e.clientY,d:input.drag,dy:input.dragY}; dragMoved=0; cv.classList.add('dragging'); try{ cv.setPointerCapture(e.pointerId); }catch(_){} });
 addEventListener('pointerup',e=>{
   if(dragStart && e.target===cv && dragMoved<6){ if(openIdx>=0) closeOpen(); hideOv(); }
-  dragStart=null;
+  dragStart=null; cv.classList.remove('dragging');
 });
-cv.addEventListener('click',e=>{ if(lastPointer==='mouse'){ if(openIdx>=0) closeOpen(); hideOv(); } });
+
 addEventListener('wheel',e=>{ if(!$('#viewer').hidden) return; const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY; input.wheel=Math.max(-900,Math.min(900,input.wheel+d/cam.z)); },{passive:true});
 labelsEl.addEventListener('pointerdown',e=>{ lastPointer=e.pointerType; });
 labelsEl.addEventListener('pointerover',e=>{ const b=e.target.closest('.lbl.proj'); if(!b||e.pointerType!=='mouse') return; const i=+b.dataset.p; if(i!==openIdx) showOv(i,b,false); });
