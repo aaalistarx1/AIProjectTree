@@ -503,8 +503,8 @@ $('#ovClose').onclick=hideOv;
 /* ---------------- input ---------------- */
 let lastPointer='mouse', dragStart=null, dragMoved=0;
 addEventListener('pointermove',e=>{
-  if(e.pointerType==='mouse' && !dragStart && !e.target.closest?.('.lbl') && !e.target.closest?.('.ov')){ input.touch=false; input.mx=e.clientX/innerWidth; input.my=e.clientY/innerHeight; }
-  if(dragStart){ const dx=e.clientX-dragStart.x, dy=e.clientY-dragStart.y; dragMoved=Math.max(dragMoved,Math.hypot(dx,dy)); input.drag=dragStart.d-dx/cam.z; input.dragY=Math.max(-320,Math.min(320,dragStart.dy-dy/cam.z)); }
+  if(e.pointerType==='mouse' && !dragStart && !input.manual && !e.target.closest?.('.lbl') && !e.target.closest?.('.ov')){ input.touch=false; input.mx=e.clientX/innerWidth; input.my=e.clientY/innerHeight; }
+  if(dragStart){ const dx=e.clientX-dragStart.x, dy=e.clientY-dragStart.y; dragMoved=Math.max(dragMoved,Math.hypot(dx,dy)); if(dragMoved>6) input.manual=true; input.drag=dragStart.d-dx/cam.z; input.dragY=Math.max(-320,Math.min(320,dragStart.dy-dy/cam.z)); }
 });
 cv.addEventListener('pointerdown',e=>{ lastPointer=e.pointerType; if(e.pointerType==='mouse'&&e.button!==0) return; if(e.pointerType!=='mouse') input.touch=true; dragStart={x:e.clientX,y:e.clientY,d:input.drag,dy:input.dragY}; dragMoved=0; cv.classList.add('dragging'); try{ cv.setPointerCapture(e.pointerId); }catch(_){} });
 addEventListener('pointerup',e=>{
