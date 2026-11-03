@@ -173,7 +173,8 @@ h1{font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1;margin:0;text-tr
 .pa .toast.show{opacity:1;transform:translateX(-50%)}
 /* your ride (ported prototype) */
 .ridewrap{display:flex;justify-content:center}
-.phone{position:relative;width:min(100%,392px);aspect-ratio:390/844;max-width:100%;border-radius:clamp(36px,13%,56px)/clamp(36px,6%,56px);background:#0e0f0f;padding:10px;box-sizing:border-box;box-shadow:inset 0 0 0 1.5px #3b3e3c,0 30px 60px -28px rgba(0,0,0,.5)}
+.phonebox{position:relative;flex:none}
+.phone{position:absolute;left:0;top:0;width:392px;height:848px;transform-origin:0 0;border-radius:clamp(36px,13%,56px)/clamp(36px,6%,56px);background:#0e0f0f;padding:10px;box-sizing:border-box;box-shadow:inset 0 0 0 1.5px #3b3e3c,0 30px 60px -28px rgba(0,0,0,.5)}
 .phone::before{content:"";position:absolute;z-index:3;top:20px;left:50%;transform:translateX(-50%);width:31%;height:28px;border-radius:20px;background:#000}
 .phone .clock{position:absolute;z-index:3;top:22px;left:13%;font:600 14px/24px "IBM Plex Sans",system-ui,sans-serif;color:#fff;letter-spacing:.01em}
 .ride{width:100%;height:100%;overflow-y:auto;border-radius:inherit;box-sizing:border-box;padding:60px 16px 36px;color:#fff;font-family:"IBM Plex Sans",system-ui,sans-serif;background:linear-gradient(rgba(0,0,0,.34),rgba(0,0,0,.34)),radial-gradient(120% 80% at 30% 20%,#8b9483,#5c6359 60%,#454b43);scrollbar-width:none}
@@ -566,7 +567,7 @@ function openViewer(i,j,from){
     vin.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ openViewer(i,+b.dataset.go); $('.vbody').scrollTop=0; });
   }
   else if(lf.kind==='polaroid') viewerCleanup=polaroidDemo(vin);
-  else if(lf.kind==='ride') rideApp(vin);
+  else if(lf.kind==='ride') viewerCleanup=rideApp(vin);
   if(viewer.hidden){ viewer.hidden=false; requestAnimationFrame(()=>viewer.classList.add('show')); }
   $('#vclose').focus({preventScroll:true});
 }
@@ -739,7 +740,7 @@ function rideApp(root){
   const fmtTime=m=>{ if(!isFinite(m)||m<=0) return {v:'0',u:'min'}; if(m<1) return {v:String(Math.round(m*60)),u:'sec'}; if(m<60) return {v:fmt(m),u:'min'}; const h=Math.floor(m/60),mm=Math.round(m-h*60); return {v:h+':'+String(mm).padStart(2,'0'),u:'hr'}; };
   const dots=(text,cell)=>{ const d=Math.max(2,Math.round(cell*.78)); return `<div class="dm" style="gap:${cell}px" aria-label="${text}">`+String(text).split('').filter(c=>G[c]).map(ch=>`<div style="grid-template-columns:repeat(5,${cell}px);grid-auto-rows:${cell}px">`+G[ch].join('').split('').map(b=>`<i style="width:${d}px;height:${d}px;background:${b==='1'?'#fff':'transparent'}"></i>`).join('')+'</div>').join('')+'</div>'; };
   const st={mode:'dist',unit:'mi',amount:12,sel:'evolve',editing:false};
-  root.innerHTML=`<h3>Your Ride</h3><div class="ridewrap"><div class="phone"><span class="clock">9:41</span><div class="ride" id="rd">
+  root.innerHTML=`<h3>Your Ride</h3><div class="ridewrap"><div class="phonebox" id="rBox"><div class="phone" id="rPhone"><span class="clock">9:41</span><div class="ride" id="rd">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div class="h">YOUR RIDE</div><div class="s12" style="margin-top:9px">Ready for your next trip?</div></div>
       <button id="rUnit" aria-label="Switch between miles and kilometers" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.14);border:0;border-radius:100px;padding:0 12px 0 10px;height:44px;cursor:pointer"><span id="rMi" style="font:500 13px/1 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:.06em">MI</span><span>⇆</span><span id="rKm" style="font:500 13px/1 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:.06em">KM</span></button></div>
     <div class="glass" style="position:relative;margin-top:24px;height:279px">
@@ -756,7 +757,7 @@ function rideApp(root){
     <div class="s12" id="rLegend" style="margin-top:6px"></div>
     <div id="rRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px"></div>
     <div class="s12" style="margin-top:16px;line-height:1.5">Tap any option to make it your ride. Times assume constant top speed on one full charge.</div>
-  </div></div></div><p class="note" style="text-align:center">the original prototype, running here · drag the slider, tap a ride</p>`;
+  </div></div></div></div><p class="note" style="text-align:center">the original prototype, running here · drag the slider, tap a ride</p>`;
   const q=s=>root.querySelector(s), sl=q('#rSl');
   function render(full){
     const km=st.unit==='km', tm=st.mode==='time', sel=MODES.find(m=>m.id===st.sel), amt=st.amount;
@@ -798,6 +799,16 @@ function rideApp(root){
   });
   sl.addEventListener('input',()=>{ st.amount=parseFloat(sl.value)||0; render(); });
   render(true);
+  // scale the whole phone so it fits the window without scrolling the page
+  const box=q('#rBox'), ph=q('#rPhone');
+  function fit(){
+    const top=box.getBoundingClientRect().top+(root.closest('.vbody')?.scrollTop||0);
+    const availH=innerHeight-top-104, availW=Math.min(root.clientWidth,innerWidth-32);
+    const s=Math.max(.5,Math.min(1,availH/848,availW/392));
+    ph.style.transform=`scale(${s})`; box.style.width=392*s+'px'; box.style.height=848*s+'px';
+  }
+  fit(); requestAnimationFrame(()=>requestAnimationFrame(fit)); addEventListener('resize',fit);
+  return ()=>removeEventListener('resize',fit);
 }
 
 /* ---------------- start ---------------- */
