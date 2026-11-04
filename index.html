@@ -173,6 +173,9 @@ h1{font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1;margin:0;text-tr
 .pa .toast.show{opacity:1;transform:translateX(-50%)}
 /* your ride (ported prototype) */
 .ridewrap{display:flex;justify-content:center}
+.rideview{display:flex;gap:48px;align-items:flex-start;justify-content:center;margin-top:-10px}
+.ridecopy{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:260px}
+@media (max-width:720px){.rideview{flex-direction:column;align-items:stretch;gap:16px}.ridecopy{max-width:none}}
 .phonebox{position:relative;flex:none}
 .phone{position:absolute;left:0;top:0;width:392px;height:848px;transform-origin:0 0;border-radius:clamp(36px,13%,56px)/clamp(36px,6%,56px);background:#0e0f0f;padding:10px;box-sizing:border-box;box-shadow:inset 0 0 0 1.5px #3b3e3c,0 30px 60px -28px rgba(0,0,0,.5)}
 .phone::before{content:"";position:absolute;z-index:3;top:20px;left:50%;transform:translateX(-50%);width:31%;height:28px;border-radius:20px;background:#000}
@@ -740,7 +743,7 @@ function rideApp(root){
   const fmtTime=m=>{ if(!isFinite(m)||m<=0) return {v:'0',u:'min'}; if(m<1) return {v:String(Math.round(m*60)),u:'sec'}; if(m<60) return {v:fmt(m),u:'min'}; const h=Math.floor(m/60),mm=Math.round(m-h*60); return {v:h+':'+String(mm).padStart(2,'0'),u:'hr'}; };
   const dots=(text,cell)=>{ const d=Math.max(2,Math.round(cell*.78)); return `<div class="dm" style="gap:${cell}px" aria-label="${text}">`+String(text).split('').filter(c=>G[c]).map(ch=>`<div style="grid-template-columns:repeat(5,${cell}px);grid-auto-rows:${cell}px">`+G[ch].join('').split('').map(b=>`<i style="width:${d}px;height:${d}px;background:${b==='1'?'#fff':'transparent'}"></i>`).join('')+'</div>').join('')+'</div>'; };
   const st={mode:'dist',unit:'mi',amount:12,sel:'evolve',editing:false};
-  root.innerHTML=`<h3>Your Ride</h3><div class="ridewrap"><div class="phonebox" id="rBox"><div class="phone" id="rPhone"><span class="clock">9:41</span><div class="ride" id="rd">
+  root.innerHTML=`<div class="rideview"><div class="ridecopy"><h3>Your Ride</h3><p class="note">the original prototype, running here<br>drag the slider, tap a ride</p></div><div class="ridewrap"><div class="phonebox" id="rBox"><div class="phone" id="rPhone"><span class="clock">9:41</span><div class="ride" id="rd">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div class="h">YOUR RIDE</div><div class="s12" style="margin-top:9px">Ready for your next trip?</div></div>
       <button id="rUnit" aria-label="Switch between miles and kilometers" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.14);border:0;border-radius:100px;padding:0 12px 0 10px;height:44px;cursor:pointer"><span id="rMi" style="font:500 13px/1 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:.06em">MI</span><span>⇆</span><span id="rKm" style="font:500 13px/1 'IBM Plex Sans',system-ui,sans-serif;letter-spacing:.06em">KM</span></button></div>
     <div class="glass" style="position:relative;margin-top:24px;height:279px">
@@ -757,7 +760,7 @@ function rideApp(root){
     <div class="s12" id="rLegend" style="margin-top:6px"></div>
     <div id="rRows" style="margin-top:12px;display:flex;flex-direction:column;gap:8px"></div>
     <div class="s12" style="margin-top:16px;line-height:1.5">Tap any option to make it your ride. Times assume constant top speed on one full charge.</div>
-  </div></div></div></div><p class="note" style="text-align:center">the original prototype, running here · drag the slider, tap a ride</p>`;
+  </div></div></div></div></div>`;
   const q=s=>root.querySelector(s), sl=q('#rSl');
   function render(full){
     const km=st.unit==='km', tm=st.mode==='time', sel=MODES.find(m=>m.id===st.sel), amt=st.amount;
@@ -803,8 +806,8 @@ function rideApp(root){
   const box=q('#rBox'), ph=q('#rPhone');
   function fit(){
     const top=box.getBoundingClientRect().top+(root.closest('.vbody')?.scrollTop||0);
-    const availH=innerHeight-top-104, availW=Math.min(root.clientWidth,innerWidth-32);
-    const s=Math.max(.5,Math.min(1,availH/848,availW/392));
+    const availH=innerHeight-top-60, availW=Math.min(root.clientWidth,innerWidth-32);
+    const s=Math.max(.36,Math.min(1,availH/848,availW/392));
     ph.style.transform=`scale(${s})`; box.style.width=392*s+'px'; box.style.height=848*s+'px';
   }
   fit(); requestAnimationFrame(()=>requestAnimationFrame(fit)); addEventListener('resize',fit);
