@@ -171,6 +171,33 @@ h1{font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1;margin:0;text-tr
 .pa .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:#555;font-size:13px;line-height:1.6}
 .pa .toast{position:absolute;bottom:72px;left:50%;transform:translateX(-50%) translateY(16px);background:#e8d5b0;color:#1a1a1a;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .3s;white-space:nowrap;z-index:5}
 .pa .toast.show{opacity:1;transform:translateX(-50%)}
+
+/* poetree */
+.rcpt{width:46%;background:#fff;color:#111;padding:9px 9px 14px;box-shadow:0 8px 18px rgba(0,0,0,.18);transform:rotate(2deg);font-family:var(--f-type);display:flex;flex-direction:column;gap:5px;align-items:stretch}
+.rcpt .rh{font-size:7px;letter-spacing:.18em;text-align:center}
+.rimgs{position:relative;aspect-ratio:230/278}
+.rimgs img{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;opacity:0;animation:rcyc 9s infinite}
+.rimgs img:nth-child(2){animation-delay:3s}.rimgs img:nth-child(3){animation-delay:6s}
+@keyframes rcyc{0%{opacity:0}4%,30%{opacity:1}34%,100%{opacity:0}}
+.rcpt .rl{height:3px;background:#222;opacity:.55}.rcpt .rl.s{width:62%}
+.plantv{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:44px;align-items:start}
+@media (max-width:760px){.plantv{grid-template-columns:1fr;gap:28px}}
+.paper{background:#fff;box-shadow:0 18px 40px -18px rgba(0,0,0,.35);padding:22px 22px 30px;font-family:var(--f-type);color:#111;font-size:13px;line-height:1.5;display:flex;flex-direction:column;gap:10px;width:min(100%,300px);justify-self:center}
+.paper img{width:100%;image-rendering:pixelated;display:block}
+.paper .c{text-align:center;letter-spacing:.14em;font-size:11px}
+.paper hr{border:0;border-top:1px dashed #999;margin:4px 0;width:100%}
+.paper .st{min-height:3em}
+.plantv .voice{font-size:22px;line-height:1.3;margin:0}
+.plantv label{display:flex;justify-content:space-between;font-family:var(--f-type);font-size:12px;color:var(--ink-2);margin-top:22px}
+.plantv input[type=range]{width:100%;accent-color:var(--ink)}
+.bands{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--hair)}
+.bands li{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--hair);font-size:17px;line-height:1.3;color:var(--ink-2);transition:color .3s}
+.bands li b{font-family:var(--f-type);font-weight:400;font-size:12px;padding-top:3px}
+.bands li.on{color:var(--ink)}
+.bands li.on b{background:var(--moss);color:var(--ink);padding:3px 4px;align-self:start}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;border-top:1px solid var(--hair)}
+.steps>div{padding:18px 18px 18px 0;border-bottom:1px solid var(--hair);min-width:0}
+.steps p{margin:0;font-size:19px;line-height:1.3}
 /* your ride (ported prototype) */
 .ridewrap{display:flex;justify-content:center}
 .rideview{display:flex;gap:48px;align-items:flex-start;justify-content:center;margin-top:-10px}
@@ -241,6 +268,10 @@ h1{font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1;margin:0;text-tr
 <script>
 const A='a/';
 const P=[
+  {id:'poetree', slug:'poetree', title:'Poetree', line:'Plants keep a diary. A soil sensor feeds an LLM, and a thermal printer prints each plant’s poem.', about:'how a plant feels', c:'bone',
+   media:{type:'receipt'},
+   leaves:[{name:'how-it-works', kind:'poe-how'},{name:'monstera.txt', kind:'plant', plant:'monstera'},{name:'orchid.txt', kind:'plant', plant:'orchid'},{name:'umbrella-tree.txt', kind:'plant', plant:'umbrella'},
+     {name:'video', kind:'link', href:'https://www.youtube.com/watch?v=snmvlwztDQY'},{name:'github', kind:'link', href:'https://github.com/aaalistarx1/Poetree'}]},
   {id:'your-ride', slug:'your-ride', title:'Your Ride', line:'Compare e-rides by distance, or by the time you have.', about:'distance & time', c:'sage',
    media:{type:'video',src:A+'ride_loop.mp4'},
    leaves:[{name:'try-it', kind:'ride'},{name:'demo.mp4', kind:'video', src:A+'ride.mp4', title:'Your Ride'}]},
@@ -275,7 +306,7 @@ const COLORS=['#3d2f28','#5f5768','#1b1918','#8b7864','#b4c17a','#8aa45d'];
 const MOSS=4, MOSS2=5;
 
 /* ---------------- geometry ---------------- */
-const L=1900, SP=340, X0=250;
+const L=2250, SP=340, X0=250;
 const trunkY=x=>10*Math.sin(x/170)+6*Math.sin(x/53+1.3);
 function polyline(fn,n){ const pts=[]; for(let i=0;i<=n;i++) pts.push(fn(i/n)); return pts; }
 function measure(pts){ const c=[0]; for(let i=1;i<pts.length;i++) c.push(c[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1])); return c; }
@@ -335,7 +366,7 @@ function buildTree(){
   const forks=proj.map(p=>p.a);
   grow(tb,trunkPts,{w0:8,w1:3.2,speed:TRUNK_SPEED,delay:TRUNK_START,tip:.07,moss:.9,hot:[[0,0],...forks],sd:1});
   clump(tb,0,0,18,110,TRUNK_START+.3);
-  for(let k=0;k<9;k++){ const x=80+k*205+rnd()*60; twig(tb,x,trunkY(x),(rnd()<.5?-1:1)*(.7+rnd()*.9)+(rnd()<.5?0:3.14)*0,50+rnd()*60,reachT(x)+.2,20+k); }
+  for(let k=0;k<11;k++){ const x=80+k*205+rnd()*60; twig(tb,x,trunkY(x),(rnd()<.5?-1:1)*(.7+rnd()*.9)+(rnd()<.5?0:3.14)*0,50+rnd()*60,reachT(x)+.2,20+k); }
   labelTimes.root=TRUNK_START+.2;
   proj.forEach(p=>{
     const sb=newBranch('stem'+p.i,p.i,0), st=reachT(p.ax);
@@ -489,6 +520,7 @@ function fillOv(i){
   const p=P[i]; if(ovFor===i) return; ovFor=i;
   const m=$('#ovMedia'); m.innerHTML='';
   if(p.media.type==='video'){ const v=document.createElement('video'); v.muted=true; v.loop=true; v.playsInline=true; v.autoplay=true; v.setAttribute('muted',''); v.src=p.media.src; m.appendChild(v); v.play().catch(()=>{}); }
+  else if(p.media.type==='receipt'){ m.innerHTML=`<div class="rcpt"><div class="rh">POETREE · DIARY</div><div class="rimgs"><img src="${A}poe_monstera.png" alt=""><img src="${A}poe_umbrella.png" alt=""><img src="${A}poe_orchid.png" alt=""></div><div class="rl"></div><div class="rl s"></div><div class="rl"></div></div>`; }
   else if(p.media.type==='polaroid'){ m.innerHTML=`<div class="pmini"><div class="ph"><img src="${A}hand.jpg" alt=""><div class="milk"></div></div><span class="st">🌼</span></div>`; }
   ov.dataset.c=p.c;
   $('#ovTitle').textContent=p.title;
@@ -571,6 +603,8 @@ function openViewer(i,j,from){
   }
   else if(lf.kind==='polaroid') viewerCleanup=polaroidDemo(vin);
   else if(lf.kind==='ride') viewerCleanup=rideApp(vin);
+  else if(lf.kind==='plant') plantView(vin,lf.plant);
+  else if(lf.kind==='poe-how') poeHow(vin);
   if(viewer.hidden){ viewer.hidden=false; requestAnimationFrame(()=>viewer.classList.add('show')); }
   $('#vclose').focus({preventScroll:true});
 }
@@ -725,6 +759,48 @@ function polaroidDemo(root){
   return stop;
 }
 
+
+/* ---------------- poetree ---------------- */
+const PLANTS={
+  monstera:{name:'Monstera', img:'poe_monstera.png', voice:'Bold, adventurous, weird-but-fun. Writes short English free verse with surreal, playful images.',
+    bands:[[0,25,'desert-dry, running on adrenaline, surviving on stubborn courage'],[25,45,'a long walk between water stops, a little tired but still joking'],[45,65,'sweet jungle balance, perfect for plotting new climbs and experiments'],[65,80,'air feels heavy and damp around the roots, slightly slowed but still curious'],[80,100,'swampy and over-wet, boundaries crossed, energy turning restless and strange']],
+    offline:'Signal drops out, but I still lean forward, ready for the next strange adventure.'},
+  orchid:{name:'Orchid · 兰花', img:'poe_orchid.png', voice:'Resilient, composed, quietly defiant. Writes three-line Chinese modern poetry, calm but sharp.',
+    bands:[[0,25,'极度干渴，嗓子发沙，但仍咬牙站立'],[25,45,'略干但还清醒，像长时间开会后的疲惫'],[45,65,'最舒服的区间，专注向上生长'],[65,80,'有些闷湿，根系不透气，开始不耐烦'],[80,100,'严重积水，快要烂根，愤怒又无奈']],
+    offline:'我暂时失去了信号，只能沉默地站立。'},
+  umbrella:{name:'Umbrella Tree', img:'poe_umbrella.png', voice:'A gentle, thoughtful guardian. Writes calm, minimal English verse with a hint of philosophy.',
+    bands:[[0,25,'very dry, tired but still standing, holding space even when neglected'],[25,45,'a bit thirsty, slightly drained, but attentive and present'],[45,65,'comfortable and balanced, the ideal zone for soft, steady care'],[65,80,'a little too heavy and damp, air feels thick around the roots'],[80,100,'overwhelmed by water, boundaries crossed, quietly struggling']],
+    offline:'Signal is gone for now, so I stand here in quiet guardianship.'}
+};
+function plantView(root,key){
+  const pl=PLANTS[key];
+  root.innerHTML=`<h3>${pl.name}</h3><div class="plantv">
+    <div class="paper"><div class="c">POETREE · DIARY ENTRY</div><img src="${A}${pl.img}" alt="${pl.name}, as printed on the receipt"><hr>
+      <div>soil moisture <span id="pvPct"></span></div><div class="st" id="pvState"></div><hr>
+      <div style="color:#666;font-size:12px">the LLM turns this state into a title and three lines, and the printer prints them here</div></div>
+    <div><div class="k">voice</div><p class="voice">${pl.voice}</p>
+      <label for="pvSl"><span>soil moisture</span><span id="pvVal"></span></label><input type="range" id="pvSl" min="0" max="100" value="52">
+      <div class="k" style="margin-top:22px">mood bands from the plant’s prompt</div>
+      <ul class="bands" id="pvBands">${pl.bands.map(b=>`<li><b>${b[0]}–${b[1]}%</b><span>${b[2]}</span></li>`).join('')}</ul>
+      <p class="note" style="margin-top:18px">offline, it prints: “${pl.offline}”</p></div></div>`;
+  const sl=root.querySelector('#pvSl');
+  const upd=()=>{ const v=+sl.value; const i=pl.bands.findIndex(b=>v<b[1]||b[1]===100);
+    root.querySelector('#pvPct').textContent=v+'%'; root.querySelector('#pvVal').textContent=v+'%';
+    root.querySelector('#pvState').textContent=pl.bands[i][2];
+    root.querySelectorAll('#pvBands li').forEach((li,k)=>li.classList.toggle('on',k===i)); };
+  sl.addEventListener('input',upd); upd();
+}
+function poeHow(root){
+  root.innerHTML=`<h3>How Poetree works</h3>
+  <div class="steps">
+    <div><div class="k">01 sense</div><p>A soil moisture sensor sits in each pot.</p></div>
+    <div><div class="k">02 map</div><p>An ESP32 reads the percentage and sends it to the LLM with that plant’s prompt, which defines five mood bands.</p></div>
+    <div><div class="k">03 write</div><p>GPT-4o-mini picks the mood and writes a title and three lines in that plant’s voice and language.</p></div>
+    <div><div class="k">04 print</div><p>A thermal printer prints the entry with the plant’s dithered portrait.</p></div>
+  </div>
+  <div class="pair"><div><div class="k">three voices</div><p>Monstera writes playful English free verse, Orchid writes Chinese modern poetry, Umbrella Tree writes calm, reflective English.</p></div>
+  <div><div class="k">enclosure</div><p>A laser-cut clear acrylic box holds the printer and ESP32, with its own paper path and a sliding door for refills.</p></div></div>`;
+}
 /* ---------------- your ride (ported from the prototype) ---------------- */
 function rideApp(root){
   const MI=1.609344;
